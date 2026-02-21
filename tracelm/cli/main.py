@@ -72,6 +72,12 @@ def _cmd_run(python_file: str) -> None:
 
     exec(source, {})
 
+    from tracelm.context import get_current_span
+
+    current_span = get_current_span()
+    if current_span is not None:
+        current_span.finish()
+
     trace = _resolve_trace_object()
     if trace is not None:
         trace.validate()
