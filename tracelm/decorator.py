@@ -47,7 +47,9 @@ def node(name: str) -> Callable[[F], F]:
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 trace = _get_active_trace()
                 parent_span = get_current_span()
-                parent_id = parent_span.span_id if isinstance(parent_span, Span) else None
+                if not isinstance(parent_span, Span):
+                    raise RuntimeError("No active parent span. CLI must initialize root span.")
+                parent_id = parent_span.span_id
 
                 span = Span(
                     span_id=uuid4().hex,
@@ -73,7 +75,9 @@ def node(name: str) -> Callable[[F], F]:
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             trace = _get_active_trace()
             parent_span = get_current_span()
-            parent_id = parent_span.span_id if isinstance(parent_span, Span) else None
+            if not isinstance(parent_span, Span):
+                raise RuntimeError("No active parent span. CLI must initialize root span.")
+            parent_id = parent_span.span_id
 
             span = Span(
                 span_id=uuid4().hex,
