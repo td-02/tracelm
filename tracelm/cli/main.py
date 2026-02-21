@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any
 
 from tracelm.context import get_current_trace
 from tracelm.decorator import get_trace
+from tracelm.profiler import generate_summary
 from tracelm.storage.sqlite_store import init_db, list_traces, load_trace, save_trace
 from tracelm.trace import Trace
 
@@ -27,7 +27,16 @@ def _cmd_run(python_file: str) -> None:
     trace = _resolve_trace_object()
     if trace is not None:
         save_trace(trace)
-        print(trace.trace_id)
+        summary = generate_summary(trace)
+        critical_path = " -> ".join(summary["critical_path"])
+
+        print("Trace Summary")
+        print("-------------")
+        print(f"Trace ID: {summary['trace_id']}")
+        print(f"Total Latency: {summary['total_latency']}s")
+        print(f"Total Spans: {summary['total_spans']}")
+        print(f"Slowest Span: {summary['slowest_span']}")
+        print(f"Critical Path: {critical_path}")
 
 
 def _cmd_analyze(trace_id: str) -> None:
