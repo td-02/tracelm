@@ -14,9 +14,10 @@ def compute_total_latency(trace: Trace) -> float:
 
 
 def find_slowest_span(trace: Trace) -> Span | None:
-    if not trace.spans:
+    user_spans = [span for span in trace.spans.values() if span.name != "__root__"]
+    if not user_spans:
         return None
-    return max(trace.spans.values(), key=lambda span: span.duration)
+    return max(user_spans, key=lambda span: span.duration)
 
 
 def compute_critical_path(trace: Trace) -> list[str]:
@@ -61,14 +62,15 @@ def compute_critical_path(trace: Trace) -> list[str]:
 
 
 def detect_anomalies(trace: Trace) -> dict:
-    if not trace.spans:
+    user_spans = [span for span in trace.spans.values() if span.name != "__root__"]
+    if not user_spans:
         return {"latency_spikes": []}
 
-    durations = [span.duration for span in trace.spans.values()]
+    durations = [span.duration for span in user_spans]
     mean_duration = sum(durations) / len(durations)
     threshold = mean_duration * 2
 
-    spikes = [span.name for span in trace.spans.values() if span.duration > threshold]
+    spikes = [span.name for span in user_spans if span.duration > threshold]
     return {"latency_spikes": spikes}
 
 
