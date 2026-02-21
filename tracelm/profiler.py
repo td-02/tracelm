@@ -62,10 +62,17 @@ def compute_critical_path(trace: Trace) -> list[str]:
 
 def generate_summary(trace: Trace) -> dict:
     slowest = find_slowest_span(trace)
+    total_tokens_in = sum(span.tokens_in for span in trace.spans.values())
+    total_tokens_out = sum(span.tokens_out for span in trace.spans.values())
+    total_cost = sum(span.cost for span in trace.spans.values())
+
     return {
         "trace_id": trace.trace_id,
         "total_latency": compute_total_latency(trace),
         "total_spans": len(trace.spans),
         "slowest_span": slowest.name if slowest is not None else "",
         "critical_path": compute_critical_path(trace),
+        "total_tokens_in": total_tokens_in,
+        "total_tokens_out": total_tokens_out,
+        "total_cost": total_cost,
     }
