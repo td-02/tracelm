@@ -49,3 +49,20 @@ def set_current_span(span: Any | None) -> Token[Any | None]:
 def get_current_span() -> Any | None:
     """Return the active span for the current context, if any."""
     return _current_span.get()
+
+
+def record_tokens(tokens_in: int = 0, tokens_out: int = 0, cost: float = 0.0) -> None:
+    """Accumulate token and cost metrics on the current active span.
+
+    If no span is active, this function does nothing.
+    """
+    span = get_current_span()
+    if span is None:
+        return
+
+    try:
+        span.tokens_in += int(tokens_in)
+        span.tokens_out += int(tokens_out)
+        span.cost += float(cost)
+    except Exception:
+        return
