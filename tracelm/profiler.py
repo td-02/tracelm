@@ -60,6 +60,18 @@ def compute_critical_path(trace: Trace) -> list[str]:
     return dfs(root.span_id)[1]
 
 
+def detect_anomalies(trace: Trace) -> dict:
+    if not trace.spans:
+        return {"latency_spikes": []}
+
+    durations = [span.duration for span in trace.spans.values()]
+    mean_duration = sum(durations) / len(durations)
+    threshold = mean_duration * 2
+
+    spikes = [span.name for span in trace.spans.values() if span.duration > threshold]
+    return {"latency_spikes": spikes}
+
+
 def generate_summary(trace: Trace) -> dict:
     slowest = find_slowest_span(trace)
     total_tokens_in = sum(span.tokens_in for span in trace.spans.values())
@@ -75,4 +87,5 @@ def generate_summary(trace: Trace) -> dict:
         "total_tokens_in": total_tokens_in,
         "total_tokens_out": total_tokens_out,
         "total_cost": total_cost,
+        "anomalies": detect_anomalies(trace),
     }

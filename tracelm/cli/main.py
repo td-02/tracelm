@@ -48,6 +48,7 @@ def _cmd_run(python_file: str) -> None:
 
     trace = _resolve_trace_object()
     if trace is not None:
+        trace.validate()
         save_trace(trace)
         summary = generate_summary(trace)
         critical_path = " -> ".join(summary["critical_path"])
@@ -55,10 +56,14 @@ def _cmd_run(python_file: str) -> None:
         print("Trace Summary")
         print("-------------")
         print(f"Trace ID: {summary['trace_id']}")
-        print(f"Total Latency: {summary['total_latency']}s")
+        print(f"Total Latency: {summary['total_latency']}")
         print(f"Total Spans: {summary['total_spans']}")
         print(f"Slowest Span: {summary['slowest_span']}")
         print(f"Critical Path: {critical_path}")
+        print(f"Tokens In: {summary['total_tokens_in']}")
+        print(f"Tokens Out: {summary['total_tokens_out']}")
+        print(f"Total Cost: {summary['total_cost']}")
+        print(f"Anomalies: {summary['anomalies']}")
 
 
 def _cmd_analyze(trace_id: str) -> None:
@@ -87,16 +92,20 @@ def _cmd_compare(trace_id_1: str, trace_id_2: str) -> None:
     latency_2 = summary_2["total_latency"]
     cost_1 = summary_1["total_cost"]
     cost_2 = summary_2["total_cost"]
+    tokens_out_1 = summary_1["total_tokens_out"]
+    tokens_out_2 = summary_2["total_tokens_out"]
 
     print("Trace Comparison")
     print("----------------")
-    print(f"Trace 1 Latency: {latency_1}")
-    print(f"Trace 2 Latency: {latency_2}")
+    print(f"Latency 1: {latency_1}")
+    print(f"Latency 2: {latency_2}")
     print(f"Latency Delta: {latency_2 - latency_1}")
     print("")
-    print(f"Trace 1 Cost: {cost_1}")
-    print(f"Trace 2 Cost: {cost_2}")
+    print(f"Cost 1: {cost_1}")
+    print(f"Cost 2: {cost_2}")
     print(f"Cost Delta: {cost_2 - cost_1}")
+    print("")
+    print(f"Token Delta (out): {tokens_out_2 - tokens_out_1}")
 
 
 def _cmd_list() -> None:

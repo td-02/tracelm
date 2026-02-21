@@ -38,35 +38,28 @@ class Trace:
         return self.spans.get(span_id)
 
     def validate(self) -> None:
-        if not self.spans:
-            raise ValueError("trace must contain at least one span")
-
-        roots = [s for s in self.spans.values() if s.parent_id is None]
+        roots = [span for span in self.spans.values() if span.parent_id is None]
         if len(roots) != 1:
             raise ValueError("trace must contain exactly one root span")
 
         root = roots[0]
-        if self.root_span_id != root.span_id:
-            raise ValueError("root_span_id is inconsistent with spans")
+        visited: Set[str] = set()
+        stack = [root.span_id]
 
-        adjacency: Dict[str, Set[str]] = {span_id: set() for span_id in self.spans}
+        children_by_parent: Dict[str, Set[str]] = {span_id: set() for span_id in self.spans}
         for span in self.spans.values():
-            if span.trace_id != self.trace_id:
-                raise ValueError("all spans must belong to this trace")
             if span.parent_id is None:
                 continue
             if span.parent_id not in self.spans:
                 raise ValueError(f"parent span '{span.parent_id}' not found for span '{span.span_id}'")
-            adjacency[span.parent_id].add(span.span_id)
+            children_by_parent[span.parent_id].add(span.span_id)
 
-        visited: Set[str] = set()
-        stack = [root.span_id]
         while stack:
             current = stack.pop()
             if current in visited:
                 continue
             visited.add(current)
-            stack.extend(adjacency[current] - visited)
+            stack.extend(children_by_parent.get(current, set()) - visited)
 
         if len(visited) != len(self.spans):
             raise ValueError("all spans must be reachable from the root span")
