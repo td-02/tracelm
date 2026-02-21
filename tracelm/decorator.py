@@ -5,7 +5,7 @@ from inspect import iscoroutinefunction
 from typing import Any, Callable, Dict, Optional, TypeVar, cast
 from uuid import uuid4
 
-from tracelm.context import create_new_trace, get_current_span, get_current_trace, set_current_span
+from tracelm.context import get_current_span, get_current_trace, set_current_span
 from tracelm.span import Span
 from tracelm.trace import Trace
 
@@ -18,7 +18,7 @@ def get_trace(trace_id: str) -> Optional[Trace]:
     return _TRACE_REGISTRY.get(trace_id)
 
 
-def _get_or_create_trace() -> Trace:
+def _get_active_trace() -> Trace:
     current_trace = get_current_trace()
 
     if isinstance(current_trace, Trace):
@@ -33,10 +33,7 @@ def _get_or_create_trace() -> Trace:
         _TRACE_REGISTRY[current_trace] = new_trace
         return new_trace
 
-    trace_id = create_new_trace()
-    trace = Trace(trace_id=trace_id)
-    _TRACE_REGISTRY[trace_id] = trace
-    return trace
+    raise RuntimeError("No active trace. Use CLI run command.")
 
 
 def node(name: str) -> Callable[[F], F]:
@@ -48,7 +45,7 @@ def node(name: str) -> Callable[[F], F]:
 
             @wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-                trace = _get_or_create_trace()
+                trace = _get_active_trace()
                 parent_span = get_current_span()
                 parent_id = parent_span.span_id if isinstance(parent_span, Span) else None
 
@@ -74,7 +71,7 @@ def node(name: str) -> Callable[[F], F]:
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            trace = _get_or_create_trace()
+            trace = _get_active_trace()
             parent_span = get_current_span()
             parent_id = parent_span.span_id if isinstance(parent_span, Span) else None
 

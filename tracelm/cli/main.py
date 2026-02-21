@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tracelm.context import get_current_trace
+from tracelm.context import create_new_trace, get_current_trace
 from tracelm.decorator import get_trace
 from tracelm.profiler import generate_summary
 from tracelm.span import Span
@@ -44,6 +44,7 @@ def _trace_from_data(data: dict[str, Any]) -> Trace:
 
 def _cmd_run(python_file: str) -> None:
     source = Path(python_file).read_text(encoding="utf-8")
+    create_new_trace()
     exec(source, {})
 
     trace = _resolve_trace_object()
