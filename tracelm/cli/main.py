@@ -8,6 +8,7 @@ from typing import Any
 
 from tracelm.context import create_new_trace, get_current_trace, set_current_span
 from tracelm.decorator import get_trace
+from tracelm.exporters.chrome_exporter import export_trace_to_chrome
 from tracelm.profiler import generate_summary
 from tracelm.span import Span
 from tracelm.storage.sqlite_store import init_db, list_traces, load_trace, save_trace
@@ -106,6 +107,21 @@ def _cmd_analyze(trace_id: str) -> None:
     print(json.dumps(data))
 
 
+def _cmd_export(trace_id: str, export_format: str) -> None:
+    data = load_trace(trace_id)
+    if data is None:
+        print("null")
+        return
+
+    trace = _trace_from_data(data)
+    output_file = f"trace_{trace_id}.json"
+
+    if export_format == "chrome":
+        export_trace_to_chrome(trace, output_file)
+
+    print(f"Exported to {output_file}")
+
+
 def _cmd_compare(trace_id_1: str, trace_id_2: str) -> None:
     data_1 = load_trace(trace_id_1)
     data_2 = load_trace(trace_id_2)
@@ -155,6 +171,10 @@ def run(argv: list[str] | None = None) -> None:
     analyze_parser = subparsers.add_parser("analyze")
     analyze_parser.add_argument("trace_id")
 
+    export_parser = subparsers.add_parser("export")
+    export_parser.add_argument("trace_id")
+    export_parser.add_argument("--format", dest="export_format", choices=["chrome"], required=True)
+
     compare_parser = subparsers.add_parser("compare")
     compare_parser.add_argument("trace_id_1")
     compare_parser.add_argument("trace_id_2")
@@ -169,6 +189,9 @@ def run(argv: list[str] | None = None) -> None:
         return
     if args.command == "analyze":
         _cmd_analyze(args.trace_id)
+        return
+    if args.command == "export":
+        _cmd_export(args.trace_id, args.export_format)
         return
     if args.command == "compare":
         _cmd_compare(args.trace_id_1, args.trace_id_2)
