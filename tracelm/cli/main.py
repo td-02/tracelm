@@ -45,7 +45,7 @@ def _trace_from_data(data: dict[str, Any]) -> Trace:
     return trace
 
 
-def _cmd_run(python_file: str) -> None:
+def _cmd_run(python_file: str, otel: bool = False) -> None:
     source = Path(python_file).read_text(encoding="utf-8")
     create_new_trace()
 
@@ -83,6 +83,11 @@ def _cmd_run(python_file: str) -> None:
     trace = _resolve_trace_object()
     if trace is not None:
         trace.validate()
+        if otel:
+            from tracelm.bridges.otel_bridge import enable_otel_bridge, export_trace_to_otel_sdk
+
+            enable_otel_bridge()
+            export_trace_to_otel_sdk(trace)
         save_trace(trace)
         summary = generate_summary(trace)
         critical_path = " -> ".join(summary["critical_path"])
@@ -173,6 +178,7 @@ def run(argv: list[str] | None = None) -> None:
 
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("python_file")
+    run_parser.add_argument("--otel", action="store_true")
 
     analyze_parser = subparsers.add_parser("analyze")
     analyze_parser.add_argument("trace_id")
@@ -191,7 +197,7 @@ def run(argv: list[str] | None = None) -> None:
     init_db()
 
     if args.command == "run":
-        _cmd_run(args.python_file)
+        _cmd_run(args.python_file, otel=args.otel)
         return
     if args.command == "analyze":
         _cmd_analyze(args.trace_id)
