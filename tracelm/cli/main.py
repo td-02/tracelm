@@ -9,6 +9,7 @@ from typing import Any
 from tracelm.context import create_new_trace, get_current_trace, set_current_span
 from tracelm.decorator import get_trace
 from tracelm.exporters.chrome_exporter import export_trace_to_chrome
+from tracelm.exporters.otel_exporter import export_trace_to_otel
 from tracelm.profiler import generate_summary
 from tracelm.span import Span
 from tracelm.storage.sqlite_store import init_db, list_traces, load_trace, save_trace
@@ -114,12 +115,17 @@ def _cmd_export(trace_id: str, export_format: str) -> None:
         return
 
     trace = _trace_from_data(data)
-    output_file = f"trace_{trace_id}.json"
 
     if export_format == "chrome":
+        output_file = f"trace_{trace_id}.json"
         export_trace_to_chrome(trace, output_file)
+        print(f"Exported to {output_file}")
+        return
 
-    print(f"Exported to {output_file}")
+    if export_format == "otel":
+        output_file = f"trace_{trace_id}_otel.json"
+        export_trace_to_otel(trace, output_file)
+        print(f"Exported to {output_file}")
 
 
 def _cmd_compare(trace_id_1: str, trace_id_2: str) -> None:
@@ -173,7 +179,7 @@ def run(argv: list[str] | None = None) -> None:
 
     export_parser = subparsers.add_parser("export")
     export_parser.add_argument("trace_id")
-    export_parser.add_argument("--format", dest="export_format", choices=["chrome"], required=True)
+    export_parser.add_argument("--format", dest="export_format", choices=["chrome", "otel"], required=True)
 
     compare_parser = subparsers.add_parser("compare")
     compare_parser.add_argument("trace_id_1")
