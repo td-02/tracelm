@@ -1,54 +1,112 @@
 # TraceLM
+Open Source LLM Execution Tracer and Profiler
 
-## What Is TraceLM
-TraceLM is an execution tracer and profiler for LLM systems. It is designed for infrastructure-level visibility into execution flow, latency structure, token usage, and cost signals across traced application nodes.
+## 1. Overview
+TraceLM is a lightweight execution tracing and profiling engine for LLM applications. It is designed for LLM pipelines, RAG systems, and multi-step workflows that require infrastructure-level observability. The runtime model uses async-safe `ContextVar` propagation and enforces a single-root DAG structure for trace consistency.
 
-## Core Features
+## 2. Core Capabilities
 - Hierarchical span tracing
 - Synthetic root span model
-- Critical path computation
-- Token and cost accounting
-- Anomaly detection
+- Deterministic trace DAG construction
+- Critical path detection
+- Slowest span identification
+- Token and cost aggregation
+- Basic anomaly detection
 - Regression comparison between traces
 - Chrome Trace Format export
 
-## Architecture Overview
-- CLI owns trace lifecycle by creating the trace context and synthetic root span
-- `ContextVar`-based propagation tracks active span state across instrumented calls
-- Trace data is represented as a DAG of spans with parent-child relationships
-- Profiling and summary generation run after execution completes
+## 3. Architecture
+TraceLM execution is CLI-driven. The CLI owns trace lifecycle and creates a synthetic root span per run. Decorators only create child spans under the active parent span. `ContextVar` propagation provides async safety for active span context. Before profiling, the trace DAG is validated. Profiling and summary generation occur after execution completes.
 
-## Example CLI Usage
+Execution flow:
+`CLI run -> create trace -> create root span -> execute user code -> finish root span -> validate DAG -> profile -> store -> print summary`
+
+## 4. Installation
+```bash
+python -m venv venv
+# Linux/macOS
+source venv/bin/activate
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+## 5. Usage
+Example instrumented code:
+
+```python
+from tracelm.decorator import node
+
+
+@node("step1")
+def step1():
+    return 1
+
+
+@node("step2")
+def step2(x):
+    return x + 1
+
+
+def main():
+    x = step1()
+    return step2(x)
+
+
+main()
+```
+
+CLI commands:
+
 Run:
-
 ```bash
 python -m tracelm.cli.main run test_app.py
 ```
 
-Compare:
+List:
+```bash
+python -m tracelm.cli.main list
+```
 
+Analyze:
+```bash
+python -m tracelm.cli.main analyze <trace_id>
+```
+
+Compare:
 ```bash
 python -m tracelm.cli.main compare <id1> <id2>
 ```
 
-Export:
-
+Export (Chrome format):
 ```bash
 python -m tracelm.cli.main export <trace_id> --format chrome
 ```
 
-## Chrome Trace Visualization
-1. Open `chrome://tracing` in Chrome.
-2. Load the exported `trace_<trace_id>.json` file.
-3. Inspect the timeline view to analyze span durations and nesting.
+## 6. Chrome Trace Visualization
+- Export generates `trace_<id>.json`
+- Open Chrome
+- Navigate to `chrome://tracing`
+- Load the JSON file
+- Inspect the execution timeline
 
-## Limitations
-- Single-process execution model
-- No distributed tracing support
-- No dedicated UI dashboard
+## 7. Limitations (Current Version)
+- Single-process tracing only
+- No distributed tracing
+- No auto-instrumentation
+- No UI dashboard
+- No OpenTelemetry exporter yet
 
-## Roadmap
-- Span histograms
-- Distributed tracing
+## 8. Roadmap
+- Span duration histograms
+- Regression threshold alerts
 - OpenTelemetry compatibility
+- Distributed trace support
 - Web dashboard
+- Performance benchmarking suite
+
+## 9. License
+MIT License
+
+## 10. Author
+Tapesh Chandra Das
