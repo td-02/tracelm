@@ -5,6 +5,11 @@ from typing import Dict, List, Optional
 from tracelm.span import Span
 from tracelm.trace import Trace
 
+BRANCH = "\u251c\u2500\u2500 "
+LAST_BRANCH = "\u2514\u2500\u2500 "
+VERTICAL = "\u2502   "
+SPACE = "    "
+
 
 def _format_span_line(span: Span) -> str:
     duration_ms = float(span.duration) * 1000.0
@@ -51,9 +56,9 @@ def render_trace_tree(trace: Trace) -> str:
         for index, child_id in enumerate(child_ids):
             child = trace.spans[child_id]
             is_last = index == len(child_ids) - 1
-            connector = "+-- " if is_last else "+-- "
+            connector = LAST_BRANCH if is_last else BRANCH
             lines.append(f"{prefix}{connector}{_format_span_line(child)}")
-            next_prefix = prefix + ("    " if is_last else "¦   ")
+            next_prefix = prefix + (SPACE if is_last else VERTICAL)
             walk(child_id, next_prefix)
 
     walk(entry.span_id, "")

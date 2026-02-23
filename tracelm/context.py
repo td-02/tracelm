@@ -12,6 +12,16 @@ from typing import Any
 
 _current_trace: ContextVar[str | None] = ContextVar("current_trace", default=None)
 _current_span: ContextVar[Any | None] = ContextVar("current_span", default=None)
+_tracing_enabled: bool = True
+
+
+def set_tracing_enabled(enabled: bool) -> None:
+    global _tracing_enabled
+    _tracing_enabled = enabled
+
+
+def is_tracing_enabled() -> bool:
+    return _tracing_enabled
 
 
 def generate_trace_id() -> str:

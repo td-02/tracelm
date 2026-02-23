@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import uuid
 from pathlib import Path
 from typing import Any
 
 from tracelm.cli.tree import render_trace_tree
-from tracelm.context import create_new_trace, get_current_trace, set_current_span
+from tracelm.context import create_new_trace, generate_span_id, get_current_trace, set_current_span
 from tracelm.decorator import get_trace
 from tracelm.exporters.chrome_exporter import export_trace_to_chrome
 from tracelm.exporters.otel_exporter import export_trace_to_otel
@@ -51,7 +50,10 @@ def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> 
     source = Path(python_file).read_text(encoding="utf-8")
 
     if not should_sample(sample_rate):
-        exec(source, {})
+        from tracelm.context import set_tracing_enabled
+
+        set_tracing_enabled(False)
+        exec(open(python_file).read(), {})
         return
 
     create_new_trace()
@@ -70,7 +72,7 @@ def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> 
         raise RuntimeError("No active trace. Use CLI run command.")
 
     root_span = Span(
-        span_id=str(uuid.uuid4()),
+        span_id=generate_span_id(),
         trace_id=trace.trace_id,
         parent_id=None,
         name="__root__",

@@ -4,7 +4,13 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Any, Callable, Dict, Optional, TypeVar, cast
 
-from tracelm.context import generate_span_id, get_current_span, get_current_trace, set_current_span
+from tracelm.context import (
+    generate_span_id,
+    get_current_span,
+    get_current_trace,
+    is_tracing_enabled,
+    set_current_span,
+)
 from tracelm.span import Span
 from tracelm.trace import Trace
 
@@ -44,6 +50,9 @@ def node(name: str) -> Callable[[F], F]:
 
             @wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+                if not is_tracing_enabled():
+                    return await func(*args, **kwargs)
+
                 trace = _get_active_trace()
                 parent_span = get_current_span()
                 if not isinstance(parent_span, Span):
@@ -72,6 +81,9 @@ def node(name: str) -> Callable[[F], F]:
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not is_tracing_enabled():
+                return func(*args, **kwargs)
+
             trace = _get_active_trace()
             parent_span = get_current_span()
             if not isinstance(parent_span, Span):
