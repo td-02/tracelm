@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from tracelm.cli.tree import render_trace_tree
 from tracelm.context import create_new_trace, get_current_trace, set_current_span
 from tracelm.decorator import get_trace
 from tracelm.exporters.chrome_exporter import export_trace_to_chrome
@@ -103,6 +104,10 @@ def _cmd_run(python_file: str, otel: bool = False) -> None:
         print(f"Tokens Out: {summary['total_tokens_out']}")
         print(f"Total Cost: {summary['total_cost']}")
         print(f"Anomalies: {summary['anomalies']}")
+        print("")
+        print("Execution Tree")
+        print("--------------")
+        print(render_trace_tree(trace))
 
 
 def _cmd_analyze(trace_id: str) -> None:

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tracelm"
+version = "0.3.0"
+description = "Lightweight distributed LLM execution tracer and profiler"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Tapesh Chandra Das" }
+]
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+fastapi = ["fastapi"]
+requests = ["requests"]
+otel = ["opentelemetry-sdk"]
+
+[project.scripts]
+tracelm = "tracelm.cli.main:run"

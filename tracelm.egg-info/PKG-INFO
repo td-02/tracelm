@@ -1,0 +1,127 @@
+Metadata-Version: 2.4
+Name: tracelm
+Version: 0.3.0
+Summary: Lightweight distributed LLM execution tracer and profiler
+Author: Tapesh Chandra Das
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Provides-Extra: fastapi
+Requires-Dist: fastapi; extra == "fastapi"
+Provides-Extra: requests
+Requires-Dist: requests; extra == "requests"
+Provides-Extra: otel
+Requires-Dist: opentelemetry-sdk; extra == "otel"
+
+# TraceLM
+Open Source LLM Execution Tracer and Profiler
+
+## 1. Overview
+TraceLM is a lightweight execution tracing and profiling engine for LLM applications. It is designed for LLM pipelines, RAG systems, and multi-step workflows that require infrastructure-level observability. The runtime model uses async-safe `ContextVar` propagation and enforces a single-root DAG structure for trace consistency.
+
+## 2. Core Capabilities
+- Hierarchical span tracing
+- Synthetic root span model
+- Deterministic trace DAG construction
+- Critical path detection
+- Slowest span identification
+- Token and cost aggregation
+- Basic anomaly detection
+- Regression comparison between traces
+- Chrome Trace Format export
+
+## 3. Architecture
+TraceLM execution is CLI-driven. The CLI owns trace lifecycle and creates a synthetic root span per run. Decorators only create child spans under the active parent span. `ContextVar` propagation provides async safety for active span context. Before profiling, the trace DAG is validated. Profiling and summary generation occur after execution completes.
+
+Execution flow:
+`CLI run -> create trace -> create root span -> execute user code -> finish root span -> validate DAG -> profile -> store -> print summary`
+
+## 4. Installation
+```bash
+python -m venv venv
+# Linux/macOS
+source venv/bin/activate
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+## 5. Usage
+Example instrumented code:
+
+```python
+from tracelm.decorator import node
+
+
+@node("step1")
+def step1():
+    return 1
+
+
+@node("step2")
+def step2(x):
+    return x + 1
+
+
+def main():
+    x = step1()
+    return step2(x)
+
+
+main()
+```
+
+CLI commands:
+
+Run:
+```bash
+python -m tracelm.cli.main run test_app.py
+```
+
+List:
+```bash
+python -m tracelm.cli.main list
+```
+
+Analyze:
+```bash
+python -m tracelm.cli.main analyze <trace_id>
+```
+
+Compare:
+```bash
+python -m tracelm.cli.main compare <id1> <id2>
+```
+
+Export (Chrome format):
+```bash
+python -m tracelm.cli.main export <trace_id> --format chrome
+```
+
+## 6. Chrome Trace Visualization
+- Export generates `trace_<id>.json`
+- Open Chrome
+- Navigate to `chrome://tracing`
+- Load the JSON file
+- Inspect the execution timeline
+
+## 7. Limitations (Current Version)
+- Single-process tracing only
+- No distributed tracing
+- No auto-instrumentation
+- No UI dashboard
+- No OpenTelemetry exporter yet
+
+## 8. Roadmap
+- Span duration histograms
+- Regression threshold alerts
+- OpenTelemetry compatibility
+- Distributed trace support
+- Web dashboard
+- Performance benchmarking suite
+
+## 9. License
+MIT License
+
+## 10. Author
+Tapesh Chandra Das
