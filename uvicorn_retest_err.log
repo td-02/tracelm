@@ -1,0 +1,76 @@
+INFO:     Started server process [13260]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\_utils.py", line 77, in collapse_excgroups
+  |     yield
+  |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\base.py", line 186, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\anyio\_backends\_asyncio.py", line 736, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 406, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 70, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    |     raise exc
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\base.py", line 185, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\contextlib.py", line 155, in __exit__
+    |     self.gen.throw(typ, value, traceback)
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\_utils.py", line 83, in collapse_excgroups
+    |     raise exc
+    |   File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\base.py", line 187, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "C:\Users\TAPESH\tracelm\tracelm\integrations\fastapi.py", line 69, in dispatch
+    |     trace.validate()
+    |   File "C:\Users\TAPESH\tracelm\tracelm\trace.py", line 43, in validate
+    |     raise ValueError("trace must contain exactly one root span")
+    | ValueError: trace must contain exactly one root span
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 406, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 70, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\errors.py", line 187, in __call__
+    raise exc
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\errors.py", line 165, in __call__
+    await self.app(scope, receive, _send)
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\base.py", line 185, in __call__
+    with collapse_excgroups():
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\_utils.py", line 83, in collapse_excgroups
+    raise exc
+  File "C:\Users\TAPESH\OneDrive\Documents\pythonf\Lib\site-packages\starlette\middleware\base.py", line 187, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\TAPESH\tracelm\tracelm\integrations\fastapi.py", line 69, in dispatch
+    trace.validate()
+  File "C:\Users\TAPESH\tracelm\tracelm\trace.py", line 43, in validate
+    raise ValueError("trace must contain exactly one root span")
+ValueError: trace must contain exactly one root span
