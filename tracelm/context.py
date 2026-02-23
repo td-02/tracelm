@@ -6,16 +6,30 @@ context (thread, task, coroutine) and does not leak across concurrent work.
 
 from __future__ import annotations
 
+import secrets
 from contextvars import ContextVar, Token
 from typing import Any
-from uuid import uuid4
 
 _current_trace: ContextVar[str | None] = ContextVar("current_trace", default=None)
 _current_span: ContextVar[Any | None] = ContextVar("current_span", default=None)
 
 
+def generate_trace_id() -> str:
+    while True:
+        trace_id = secrets.token_hex(16).lower()
+        if trace_id != "0" * 32:
+            return trace_id
+
+
+def generate_span_id() -> str:
+    while True:
+        span_id = secrets.token_hex(8).lower()
+        if span_id != "0" * 16:
+            return span_id
+
+
 def create_new_trace() -> str:
-    trace_id = uuid4().hex
+    trace_id = generate_trace_id()
     _current_trace.set(trace_id)
     _current_span.set(None)
     return trace_id
