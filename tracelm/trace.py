@@ -39,27 +39,40 @@ class Trace:
 
     def validate(self) -> None:
         roots = [span for span in self.spans.values() if span.parent_id is None]
-        if len(roots) != 1:
-            raise ValueError("trace must contain exactly one root span")
+        external_parents = [
+            span for span in self.spans.values() if span.parent_id is not None and span.parent_id not in self.spans
+        ]
 
-        root = roots[0]
-        visited: Set[str] = set()
-        stack = [root.span_id]
+        is_local = len(roots) == 1 and len(external_parents) == 0
+        is_distributed = len(roots) == 0 and len(external_parents) == 1
+        if not (is_local or is_distributed):
+            raise ValueError("invalid trace structure")
+
+        entry_span = roots[0] if is_local else external_parents[0]
 
         children_by_parent: Dict[str, Set[str]] = {span_id: set() for span_id in self.spans}
         for span in self.spans.values():
-            if span.parent_id is None:
+            if span.parent_id is None or span.parent_id not in self.spans:
                 continue
-            if span.parent_id not in self.spans:
-                raise ValueError(f"parent span '{span.parent_id}' not found for span '{span.span_id}'")
             children_by_parent[span.parent_id].add(span.span_id)
 
-        while stack:
-            current = stack.pop()
-            if current in visited:
-                continue
-            visited.add(current)
-            stack.extend(children_by_parent.get(current, set()) - visited)
+        state: Dict[str, int] = {span_id: 0 for span_id in self.spans}
+        visited: Set[str] = set()
+
+        def dfs(span_id: str) -> None:
+            status = state[span_id]
+            if status == 1:
+                raise ValueError("invalid trace structure")
+            if status == 2:
+                return
+
+            state[span_id] = 1
+            visited.add(span_id)
+            for child_id in children_by_parent.get(span_id, set()):
+                dfs(child_id)
+            state[span_id] = 2
+
+        dfs(entry_span.span_id)
 
         if len(visited) != len(self.spans):
-            raise ValueError("all spans must be reachable from the root span")
+            raise ValueError("invalid trace structure")
