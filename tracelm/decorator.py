@@ -3,9 +3,8 @@ from __future__ import annotations
 from functools import wraps
 from inspect import iscoroutinefunction
 from typing import Any, Callable, Dict, Optional, TypeVar, cast
-from uuid import uuid4
 
-from tracelm.context import get_current_span, get_current_trace, set_current_span
+from tracelm.context import generate_span_id, get_current_span, get_current_trace, set_current_span
 from tracelm.span import Span
 from tracelm.trace import Trace
 
@@ -52,7 +51,7 @@ def node(name: str) -> Callable[[F], F]:
                 parent_id = parent_span.span_id
 
                 span = Span(
-                    span_id=uuid4().hex,
+                    span_id=generate_span_id(),
                     trace_id=trace.trace_id,
                     parent_id=parent_id,
                     name=name,
@@ -80,7 +79,7 @@ def node(name: str) -> Callable[[F], F]:
             parent_id = parent_span.span_id
 
             span = Span(
-                span_id=uuid4().hex,
+                span_id=generate_span_id(),
                 trace_id=trace.trace_id,
                 parent_id=parent_id,
                 name=name,
