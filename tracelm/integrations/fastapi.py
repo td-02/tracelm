@@ -10,17 +10,22 @@ from tracelm.context import create_new_trace, generate_span_id, get_current_trac
 from tracelm.decorator import get_trace
 from tracelm.distributed.tracecontext import build_traceparent, parse_traceparent
 from tracelm.profiler import generate_summary
+from tracelm.sampling import should_sample
 from tracelm.span import Span
 from tracelm.storage.sqlite_store import save_trace
 from tracelm.trace import Trace
 
 
 class TraceLMMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, store_traces: bool = True) -> None:
+    def __init__(self, app, store_traces: bool = True, sample_rate: float = 1.0) -> None:
         super().__init__(app)
         self.store_traces = store_traces
+        self.sample_rate = sample_rate
 
     async def dispatch(self, request: Request, call_next) -> Response:
+        if not should_sample(self.sample_rate):
+            return await call_next(request)
+
         incoming_parent_id: str | None = None
         traceparent = request.headers.get("traceparent")
 

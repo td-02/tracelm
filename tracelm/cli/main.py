@@ -12,6 +12,7 @@ from tracelm.decorator import get_trace
 from tracelm.exporters.chrome_exporter import export_trace_to_chrome
 from tracelm.exporters.otel_exporter import export_trace_to_otel
 from tracelm.profiler import generate_summary
+from tracelm.sampling import should_sample
 from tracelm.span import Span
 from tracelm.storage.sqlite_store import init_db, list_traces, load_trace, save_trace
 from tracelm.trace import Trace
@@ -46,8 +47,13 @@ def _trace_from_data(data: dict[str, Any]) -> Trace:
     return trace
 
 
-def _cmd_run(python_file: str, otel: bool = False) -> None:
+def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> None:
     source = Path(python_file).read_text(encoding="utf-8")
+
+    if not should_sample(sample_rate):
+        exec(source, {})
+        return
+
     create_new_trace()
 
     from tracelm import decorator as _decorator
@@ -184,6 +190,7 @@ def run(argv: list[str] | None = None) -> None:
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("python_file")
     run_parser.add_argument("--otel", action="store_true")
+    run_parser.add_argument("--sample-rate", type=float, default=1.0)
 
     analyze_parser = subparsers.add_parser("analyze")
     analyze_parser.add_argument("trace_id")
@@ -202,7 +209,7 @@ def run(argv: list[str] | None = None) -> None:
     init_db()
 
     if args.command == "run":
-        _cmd_run(args.python_file, otel=args.otel)
+        _cmd_run(args.python_file, otel=args.otel, sample_rate=args.sample_rate)
         return
     if args.command == "analyze":
         _cmd_analyze(args.trace_id)
