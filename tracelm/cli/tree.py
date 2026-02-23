@@ -1,14 +1,10 @@
 from __future__ import annotations
 
+import sys
 from typing import Dict, List, Optional
 
 from tracelm.span import Span
 from tracelm.trace import Trace
-
-BRANCH = "\u251c\u2500\u2500 "
-LAST_BRANCH = "\u2514\u2500\u2500 "
-VERTICAL = "\u2502   "
-SPACE = "    "
 
 
 def _format_span_line(span: Span) -> str:
@@ -37,6 +33,18 @@ def render_trace_tree(trace: Trace) -> str:
     if not trace.spans:
         return ""
 
+    encoding = sys.stdout.encoding
+    if encoding is None or "utf" not in encoding.lower():
+        branch = "+-- "
+        last_branch = "\\-- "
+        vertical = "|   "
+    else:
+        branch = "\u251c\u2500\u2500 "
+        last_branch = "\u2514\u2500\u2500 "
+        vertical = "\u2502   "
+
+    space = "    "
+
     children_by_parent: Dict[str, List[str]] = {span_id: [] for span_id in trace.spans}
     for span in trace.spans.values():
         if span.parent_id is not None and span.parent_id in trace.spans:
@@ -56,9 +64,9 @@ def render_trace_tree(trace: Trace) -> str:
         for index, child_id in enumerate(child_ids):
             child = trace.spans[child_id]
             is_last = index == len(child_ids) - 1
-            connector = LAST_BRANCH if is_last else BRANCH
+            connector = last_branch if is_last else branch
             lines.append(f"{prefix}{connector}{_format_span_line(child)}")
-            next_prefix = prefix + (SPACE if is_last else VERTICAL)
+            next_prefix = prefix + (space if is_last else vertical)
             walk(child_id, next_prefix)
 
     walk(entry.span_id, "")
