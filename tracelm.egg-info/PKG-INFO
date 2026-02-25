@@ -1,17 +1,19 @@
 Metadata-Version: 2.4
 Name: tracelm
-Version: 0.3.0
+Version: 0.4.0
 Summary: Lightweight distributed LLM execution tracer and profiler
 Author: Tapesh Chandra Das
-License: MIT
+License-Expression: MIT
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Provides-Extra: fastapi
 Requires-Dist: fastapi; extra == "fastapi"
 Provides-Extra: requests
 Requires-Dist: requests; extra == "requests"
 Provides-Extra: otel
 Requires-Dist: opentelemetry-sdk; extra == "otel"
+Dynamic: license-file
 
 # TraceLM
 Open Source LLM Execution Tracer and Profiler

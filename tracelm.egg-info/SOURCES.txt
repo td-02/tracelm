@@ -1,10 +1,11 @@
+LICENSE
 README.md
 pyproject.toml
-setup.py
 tracelm/__init__.py
 tracelm/context.py
 tracelm/decorator.py
 tracelm/profiler.py
+tracelm/sampling.py
 tracelm/span.py
 tracelm/trace.py
 tracelm.egg-info/PKG-INFO
@@ -13,3 +14,12 @@ tracelm.egg-info/dependency_links.txt
 tracelm.egg-info/entry_points.txt
 tracelm.egg-info/requires.txt
 tracelm.egg-info/top_level.txt
+tracelm/bridges/otel_bridge.py
+tracelm/cli/main.py
+tracelm/cli/tree.py
+tracelm/distributed/tracecontext.py
+tracelm/exporters/chrome_exporter.py
+tracelm/exporters/otel_exporter.py
+tracelm/integrations/fastapi.py
+tracelm/integrations/requests.py
+tracelm/storage/sqlite_store.py

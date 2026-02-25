@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tracelm"
-version = "0.3.0"
+version = "0.4.0"
 description = "Lightweight distributed LLM execution tracer and profiler"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
   { name = "Tapesh Chandra Das" }
 ]
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.optional-dependencies]
 fastapi = ["fastapi"]
