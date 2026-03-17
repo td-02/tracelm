@@ -30,6 +30,7 @@ It is not meant to replace OpenTelemetry. It is a minimal tracing core designed 
 - Head-based probabilistic sampling
 - Critical path detection
 - Slowest span identification
+- Span duration histograms
 - Token and cost aggregation
 - Regression comparison between traces
 - Chrome Trace export

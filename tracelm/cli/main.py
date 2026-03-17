@@ -46,6 +46,30 @@ def _trace_from_data(data: dict[str, Any]) -> Trace:
     return trace
 
 
+def _print_summary(summary: dict[str, Any]) -> None:
+    critical_path = " -> ".join(summary["critical_path"])
+
+    print("Trace Summary")
+    print("-------------")
+    print(f"Trace ID: {summary['trace_id']}")
+    print(f"Total Latency: {summary['total_latency']}")
+    print(f"Total Spans: {summary['total_spans']}")
+    print(f"Slowest Span: {summary['slowest_span']}")
+    print(f"Critical Path: {critical_path}")
+    print(f"Tokens In: {summary['total_tokens_in']}")
+    print(f"Tokens Out: {summary['total_tokens_out']}")
+    print(f"Total Cost: {summary['total_cost']}")
+    print(f"Anomalies: {summary['anomalies']}")
+
+    histogram = summary.get("duration_histogram_ms", [])
+    if histogram:
+        print("")
+        print("Duration Histogram (ms)")
+        print("-----------------------")
+        for bucket in histogram:
+            print(f"{bucket['label']}: {bucket['count']}")
+
+
 def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> None:
     source = Path(python_file).read_text(encoding="utf-8")
 
@@ -99,31 +123,30 @@ def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> 
             export_trace_to_otel_sdk(trace)
         save_trace(trace)
         summary = generate_summary(trace)
-        critical_path = " -> ".join(summary["critical_path"])
-
-        print("Trace Summary")
-        print("-------------")
-        print(f"Trace ID: {summary['trace_id']}")
-        print(f"Total Latency: {summary['total_latency']}")
-        print(f"Total Spans: {summary['total_spans']}")
-        print(f"Slowest Span: {summary['slowest_span']}")
-        print(f"Critical Path: {critical_path}")
-        print(f"Tokens In: {summary['total_tokens_in']}")
-        print(f"Tokens Out: {summary['total_tokens_out']}")
-        print(f"Total Cost: {summary['total_cost']}")
-        print(f"Anomalies: {summary['anomalies']}")
+        print("")
+        _print_summary(summary)
         print("")
         print("Execution Tree")
         print("--------------")
         print(render_trace_tree(trace))
 
 
-def _cmd_analyze(trace_id: str) -> None:
+def _cmd_analyze(trace_id: str, as_json: bool = False) -> None:
     data = load_trace(trace_id)
     if data is None:
         print("null")
         return
-    print(json.dumps(data))
+    if as_json:
+        print(json.dumps(data))
+        return
+
+    trace = _trace_from_data(data)
+    summary = generate_summary(trace)
+    _print_summary(summary)
+    print("")
+    print("Execution Tree")
+    print("--------------")
+    print(render_trace_tree(trace))
 
 
 def _cmd_export(trace_id: str, export_format: str) -> None:
@@ -196,6 +219,7 @@ def run(argv: list[str] | None = None) -> None:
 
     analyze_parser = subparsers.add_parser("analyze")
     analyze_parser.add_argument("trace_id")
+    analyze_parser.add_argument("--json", action="store_true")
 
     export_parser = subparsers.add_parser("export")
     export_parser.add_argument("trace_id")
@@ -214,7 +238,7 @@ def run(argv: list[str] | None = None) -> None:
         _cmd_run(args.python_file, otel=args.otel, sample_rate=args.sample_rate)
         return
     if args.command == "analyze":
-        _cmd_analyze(args.trace_id)
+        _cmd_analyze(args.trace_id, as_json=args.json)
         return
     if args.command == "export":
         _cmd_export(args.trace_id, args.export_format)

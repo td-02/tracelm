@@ -13,6 +13,52 @@ def compute_total_latency(trace: Trace) -> float:
     return float(root.duration)
 
 
+def build_duration_histogram(
+    trace: Trace,
+    bucket_bounds_ms: list[float] | None = None,
+) -> list[dict[str, float | int | str | None]]:
+    user_spans = [span for span in trace.spans.values() if span.name != "__root__"]
+    if not user_spans:
+        return []
+
+    bounds = bucket_bounds_ms or [0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0, 1000.0]
+    histogram: list[dict[str, float | int | str | None]] = []
+    lower_bound = 0.0
+
+    for upper_bound in bounds:
+        histogram.append(
+            {
+                "label": f"{lower_bound:.3f}-{upper_bound:.3f}",
+                "lower_ms": lower_bound,
+                "upper_ms": upper_bound,
+                "count": 0,
+            }
+        )
+        lower_bound = upper_bound
+
+    histogram.append(
+        {
+            "label": f"> {bounds[-1]:.3f}",
+            "lower_ms": bounds[-1],
+            "upper_ms": None,
+            "count": 0,
+        }
+    )
+
+    for span in user_spans:
+        duration_ms = float(span.duration) * 1000.0
+        for bucket in histogram:
+            upper_ms = bucket["upper_ms"]
+            if upper_ms is None:
+                bucket["count"] += 1
+                break
+            if duration_ms <= upper_ms:
+                bucket["count"] += 1
+                break
+
+    return histogram
+
+
 def find_slowest_span(trace: Trace) -> Span | None:
     user_spans = [span for span in trace.spans.values() if span.name != "__root__"]
     if not user_spans:
@@ -90,4 +136,5 @@ def generate_summary(trace: Trace) -> dict:
         "total_tokens_out": total_tokens_out,
         "total_cost": total_cost,
         "anomalies": detect_anomalies(trace),
+        "duration_histogram_ms": build_duration_histogram(trace),
     }
