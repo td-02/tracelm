@@ -6,7 +6,7 @@ import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
-from tracelm.cli.main import _cmd_analyze
+from tracelm.cli.main import _cmd_analyze, _cmd_demo, _cmd_export, _cmd_latest
 from tracelm.profiler import build_duration_histogram, generate_summary
 from tracelm.span import Span
 from tracelm.trace import Trace
@@ -119,6 +119,49 @@ class ProfilerAndCliTests(unittest.TestCase):
                 _cmd_analyze("abc", as_json=True)
 
         self.assertEqual(output.getvalue().strip(), json.dumps(payload))
+
+    def test_cmd_latest_uses_latest_alias(self) -> None:
+        trace = _build_trace()
+        stored_payload = {
+            "trace_id": trace.trace_id,
+            "root_span_id": trace.root_span_id,
+            "spans": {},
+        }
+
+        output = io.StringIO()
+        with patch("tracelm.cli.main.latest_trace_id", return_value=trace.trace_id):
+            with patch("tracelm.cli.main.load_trace", return_value=stored_payload):
+                with redirect_stdout(output):
+                    _cmd_latest()
+
+        rendered = output.getvalue()
+        self.assertIn("Trace Summary", rendered)
+        self.assertIn(trace.trace_id, rendered)
+
+    def test_cmd_export_supports_latest_alias(self) -> None:
+        payload = {"trace_id": "abc", "spans": {}}
+
+        with patch("tracelm.cli.main.latest_trace_id", return_value="abc"):
+            with patch("tracelm.cli.main.load_trace", return_value=payload):
+                with patch("tracelm.cli.main.export_trace_to_chrome") as export_mock:
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        _cmd_export("latest", "chrome")
+
+        export_mock.assert_called_once()
+        self.assertIn("trace_abc.json", output.getvalue())
+
+    def test_cmd_demo_saves_trace_and_prints_summary(self) -> None:
+        output = io.StringIO()
+        with patch("tracelm.cli.main.save_trace") as save_mock:
+            with redirect_stdout(output):
+                _cmd_demo()
+
+        save_mock.assert_called_once()
+        rendered = output.getvalue()
+        self.assertIn("Trace Summary", rendered)
+        self.assertIn("Execution Tree", rendered)
+        self.assertIn("llm_call", rendered)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,12 @@ It is intentionally small, local-first, and easy to read.
 pip install tracelm
 ```
 
+Try it immediately:
+
+```bash
+tracelm demo
+```
+
 Optional integrations:
 
 ```bash
@@ -32,34 +38,27 @@ pip install "tracelm[otel]"
 
 ## Quick Start
 
-Create a small instrumented script:
+The fastest path is the built-in demo:
+
+```bash
+tracelm demo
+tracelm latest
+tracelm export latest --format chrome
+```
+
+That gives you a real trace, a readable summary, and an exportable file without writing any code.
+
+If you want to trace your own script, create a small instrumented file:
 
 ```python
 from tracelm.decorator import node
-
-
-@node("step1")
-def step1() -> int:
-    return 1
-
-
-@node("step2")
-def step2(x: int) -> int:
-    return x + 1
-
-
-def main() -> int:
-    x = step1()
-    return step2(x)
-
-
-main()
 ```
 
-Run it:
+Then run it:
 
 ```bash
 tracelm run test_app.py
+tracelm latest
 ```
 
 Typical output:
@@ -146,6 +145,12 @@ Analyze a stored trace:
 tracelm analyze <trace_id>
 ```
 
+Analyze the most recent trace:
+
+```bash
+tracelm latest
+```
+
 List stored traces:
 
 ```bash
@@ -162,6 +167,12 @@ Export to Chrome Trace:
 
 ```bash
 tracelm export <trace_id> --format chrome
+```
+
+You can also use `latest` anywhere a trace ID is expected:
+
+```bash
+tracelm export latest --format chrome
 ```
 
 Export to OTEL JSON:

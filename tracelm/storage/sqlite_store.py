@@ -66,3 +66,10 @@ def list_traces() -> List[str]:
     with sqlite3.connect(DB_FILE) as conn:
         rows = conn.execute("SELECT trace_id FROM traces ORDER BY timestamp DESC").fetchall()
     return [str(row[0]) for row in rows]
+
+
+def latest_trace_id() -> Optional[str]:
+    traces = list_traces()
+    if not traces:
+        return None
+    return traces[0]
