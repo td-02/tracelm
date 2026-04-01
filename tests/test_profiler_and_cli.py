@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import io
 import json
+import tempfile
 import unittest
 from contextlib import redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
-from tracelm.cli.main import _cmd_analyze, _cmd_demo, _cmd_export, _cmd_latest
+from tracelm.cli.main import _cmd_analyze, _cmd_demo, _cmd_export, _cmd_init, _cmd_latest, _cmd_run
 from tracelm.profiler import build_duration_histogram, generate_summary
 from tracelm.span import Span
 from tracelm.trace import Trace
@@ -162,6 +164,54 @@ class ProfilerAndCliTests(unittest.TestCase):
         self.assertIn("Trace Summary", rendered)
         self.assertIn("Execution Tree", rendered)
         self.assertIn("llm_call", rendered)
+
+    def test_cmd_init_creates_example_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "example.py"
+            output = io.StringIO()
+            with redirect_stdout(output):
+                _cmd_init(str(output_path))
+
+            self.assertTrue(output_path.exists())
+            contents = output_path.read_text(encoding="utf-8")
+            self.assertIn('@node("load_data")', contents)
+            self.assertIn("def main()", contents)
+            self.assertIn("tracelm run", output.getvalue())
+
+    def test_cmd_init_refuses_to_overwrite_without_force(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "example.py"
+            output_path.write_text("existing", encoding="utf-8")
+
+            with self.assertRaises(FileExistsError):
+                _cmd_init(str(output_path))
+
+    def test_cmd_run_executes_main_guard_scripts(self) -> None:
+        script = """
+from tracelm.decorator import node
+
+@node("child_step")
+def child_step() -> int:
+    return 7
+
+def main() -> int:
+    return child_step()
+
+if __name__ == "__main__":
+    main()
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            script_path = Path(temp_dir) / "guarded.py"
+            script_path.write_text(script.strip() + "\n", encoding="utf-8")
+
+            with patch("tracelm.cli.main.save_trace"):
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    _cmd_run(str(script_path))
+
+        rendered = output.getvalue()
+        self.assertIn("child_step", rendered)
+        self.assertIn("Total Spans: 2", rendered)
 
 
 if __name__ == "__main__":

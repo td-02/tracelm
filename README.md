@@ -26,6 +26,7 @@ Try it immediately:
 
 ```bash
 tracelm demo
+tracelm init
 ```
 
 Optional integrations:
@@ -47,6 +48,13 @@ tracelm export latest --format chrome
 ```
 
 That gives you a real trace, a readable summary, and an exportable file without writing any code.
+
+If you want a starter file generated for you:
+
+```bash
+tracelm init
+tracelm run tracelm_example.py
+```
 
 If you want to trace your own script, create a small instrumented file:
 
@@ -137,6 +145,13 @@ Apply head sampling:
 
 ```bash
 tracelm run test_app.py --sample-rate 0.1
+```
+
+Generate a starter example file:
+
+```bash
+tracelm init
+tracelm init my_flow.py
 ```
 
 Analyze a stored trace:

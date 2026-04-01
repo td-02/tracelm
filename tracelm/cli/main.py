@@ -17,6 +17,30 @@ from tracelm.span import Span
 from tracelm.storage.sqlite_store import init_db, latest_trace_id, list_traces, load_trace, save_trace
 from tracelm.trace import Trace
 
+INIT_TEMPLATE = """from tracelm.decorator import node
+
+
+@node("load_data")
+def load_data() -> list[int]:
+    return [1, 2, 3]
+
+
+@node("compute_total")
+def compute_total(values: list[int]) -> int:
+    return sum(values)
+
+
+def main() -> int:
+    values = load_data()
+    total = compute_total(values)
+    print({"total": total})
+    return total
+
+
+if __name__ == "__main__":
+    main()
+"""
+
 
 def _resolve_trace_object() -> Trace | None:
     current = get_current_trace()
@@ -100,12 +124,13 @@ def _finalize_trace(trace: Trace, otel: bool = False) -> None:
 
 def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> None:
     source = Path(python_file).read_text(encoding="utf-8")
+    execution_globals = {"__name__": "__main__", "__file__": str(Path(python_file).resolve())}
 
     if not should_sample(sample_rate):
         from tracelm.context import set_tracing_enabled
 
         set_tracing_enabled(False)
-        exec(open(python_file).read(), {})
+        exec(source, execution_globals)
         return
 
     create_new_trace()
@@ -133,7 +158,7 @@ def _cmd_run(python_file: str, otel: bool = False, sample_rate: float = 1.0) -> 
     trace.add_span(root_span)
     set_current_span(root_span)
 
-    exec(source, {})
+    exec(source, execution_globals)
 
     from tracelm.context import get_current_span
 
@@ -301,6 +326,16 @@ def _cmd_latest(as_json: bool = False) -> None:
     _cmd_analyze("latest", as_json=as_json)
 
 
+def _cmd_init(output_path: str = "tracelm_example.py", force: bool = False) -> None:
+    path = Path(output_path)
+    if path.exists() and not force:
+        raise FileExistsError(f"{path} already exists. Use --force to overwrite it.")
+
+    path.write_text(INIT_TEMPLATE, encoding="utf-8")
+    print(f"Created {path}")
+    print(f"Next: tracelm run {path}")
+
+
 def run(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="tracelm",
@@ -316,6 +351,10 @@ def run(argv: list[str] | None = None) -> None:
     demo_parser = subparsers.add_parser("demo", help="Run a built-in demo trace with no setup.")
     demo_parser.add_argument("--otel", action="store_true")
     demo_parser.add_argument("--sample-rate", type=float, default=1.0)
+
+    init_parser = subparsers.add_parser("init", help="Create a small runnable TraceLM example file.")
+    init_parser.add_argument("output", nargs="?", default="tracelm_example.py", help="Output Python file path.")
+    init_parser.add_argument("--force", action="store_true", help="Overwrite the output file if it already exists.")
 
     analyze_parser = subparsers.add_parser("analyze", help="Analyze a stored trace or use 'latest'.")
     analyze_parser.add_argument("trace_id", help="Trace ID to analyze, or 'latest'.")
@@ -342,6 +381,9 @@ def run(argv: list[str] | None = None) -> None:
         return
     if args.command == "demo":
         _cmd_demo(otel=args.otel, sample_rate=args.sample_rate)
+        return
+    if args.command == "init":
+        _cmd_init(args.output, force=args.force)
         return
     if args.command == "analyze":
         _cmd_analyze(args.trace_id, as_json=args.json)
