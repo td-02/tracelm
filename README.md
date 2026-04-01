@@ -39,6 +39,8 @@ pip install "tracelm[otel]"
 
 ## Quick Start
 
+![TraceLM terminal demo](docs/assets/tracelm-demo.gif)
+
 The fastest path is the built-in demo:
 
 ```bash
