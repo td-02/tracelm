@@ -1,9 +1,0 @@
-
-[fastapi]
-fastapi
-
-[otel]
-opentelemetry-sdk
-
-[requests]
-requests

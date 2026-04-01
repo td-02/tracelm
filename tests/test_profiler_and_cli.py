@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import io
 import json
+import os
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from tracelm.cli.main import _cmd_analyze, _cmd_demo, _cmd_export, _cmd_init, _cmd_latest, _cmd_run
+from tracelm.cli.main import _cmd_analyze, _cmd_compare, _cmd_demo, _cmd_export, _cmd_init, _cmd_latest, _cmd_run
 from tracelm.profiler import build_duration_histogram, generate_summary
 from tracelm.span import Span
 from tracelm.trace import Trace
@@ -122,6 +124,14 @@ class ProfilerAndCliTests(unittest.TestCase):
 
         self.assertEqual(output.getvalue().strip(), json.dumps(payload))
 
+    def test_cmd_analyze_reports_missing_latest_trace_human_friendly(self) -> None:
+        output = io.StringIO()
+        with patch("tracelm.cli.main.latest_trace_id", return_value=None):
+            with redirect_stdout(output):
+                _cmd_analyze("latest")
+
+        self.assertIn("No stored traces found", output.getvalue())
+
     def test_cmd_latest_uses_latest_alias(self) -> None:
         trace = _build_trace()
         stored_payload = {
@@ -152,6 +162,20 @@ class ProfilerAndCliTests(unittest.TestCase):
 
         export_mock.assert_called_once()
         self.assertIn("trace_abc.json", output.getvalue())
+
+    def test_cmd_compare_supports_latest_alias(self) -> None:
+        payload = {
+            "trace_id": "abc",
+            "root_span_id": None,
+            "spans": {},
+        }
+        output = io.StringIO()
+        with patch("tracelm.cli.main.latest_trace_id", return_value="abc"):
+            with patch("tracelm.cli.main.load_trace", return_value=payload):
+                with redirect_stdout(output):
+                    _cmd_compare("latest", "abc")
+
+        self.assertIn("Trace Comparison", output.getvalue())
 
     def test_cmd_demo_saves_trace_and_prints_summary(self) -> None:
         output = io.StringIO()
@@ -186,6 +210,12 @@ class ProfilerAndCliTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 _cmd_init(str(output_path))
 
+    def test_cmd_init_creates_parent_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "nested" / "example.py"
+            _cmd_init(str(output_path))
+            self.assertTrue(output_path.exists())
+
     def test_cmd_run_executes_main_guard_scripts(self) -> None:
         script = """
 from tracelm.decorator import node
@@ -212,6 +242,37 @@ if __name__ == "__main__":
         rendered = output.getvalue()
         self.assertIn("child_step", rendered)
         self.assertIn("Total Spans: 2", rendered)
+
+    def test_end_to_end_init_run_latest_export_flow(self) -> None:
+        original_cwd = os.getcwd()
+        temp_dir = tempfile.mkdtemp()
+        try:
+            os.chdir(temp_dir)
+            init_output = io.StringIO()
+            with redirect_stdout(init_output):
+                _cmd_init("sample.py")
+
+            run_output = io.StringIO()
+            with redirect_stdout(run_output):
+                _cmd_run("sample.py")
+
+            latest_output = io.StringIO()
+            with redirect_stdout(latest_output):
+                _cmd_latest()
+
+            export_output = io.StringIO()
+            with redirect_stdout(export_output):
+                _cmd_export("latest", "chrome")
+
+            self.assertTrue(Path("sample.py").exists())
+            self.assertTrue(Path("tracelm_traces.db").exists())
+            self.assertIn("Created sample.py", init_output.getvalue())
+            self.assertIn("compute_total", run_output.getvalue())
+            self.assertIn("Trace Summary", latest_output.getvalue())
+            self.assertIn("Exported to trace_", export_output.getvalue())
+        finally:
+            os.chdir(original_cwd)
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -56,7 +56,10 @@ If you want a starter file generated for you:
 ```bash
 tracelm init
 tracelm run tracelm_example.py
+tracelm latest
 ```
+
+`tracelm run` now executes normal `if __name__ == "__main__":` scripts correctly, so generated starter files and standard Python entrypoints behave the way users expect.
 
 If you want to trace your own script, create a small instrumented file:
 

@@ -101,6 +101,10 @@ def _resolve_user_trace_id(trace_id: str) -> str | None:
     return latest_trace_id()
 
 
+def _print_missing_trace(message: str) -> None:
+    print(message)
+
+
 def _render_trace(trace: Trace) -> None:
     summary = generate_summary(trace)
     print("")
@@ -238,12 +242,18 @@ def _cmd_demo(otel: bool = False, sample_rate: float = 1.0) -> None:
 def _cmd_analyze(trace_id: str, as_json: bool = False) -> None:
     resolved_trace_id = _resolve_user_trace_id(trace_id)
     if resolved_trace_id is None:
-        print("null")
+        if as_json:
+            print("null")
+            return
+        _print_missing_trace("No stored traces found. Run `tracelm demo` or `tracelm run <file>` first.")
         return
 
     data = load_trace(resolved_trace_id)
     if data is None:
-        print("null")
+        if as_json:
+            print("null")
+            return
+        _print_missing_trace(f"Trace '{trace_id}' was not found.")
         return
     if as_json:
         print(json.dumps(data))
@@ -261,12 +271,12 @@ def _cmd_analyze(trace_id: str, as_json: bool = False) -> None:
 def _cmd_export(trace_id: str, export_format: str) -> None:
     resolved_trace_id = _resolve_user_trace_id(trace_id)
     if resolved_trace_id is None:
-        print("null")
+        _print_missing_trace("No stored traces found. Run `tracelm demo` or `tracelm run <file>` first.")
         return
 
     data = load_trace(resolved_trace_id)
     if data is None:
-        print("null")
+        _print_missing_trace(f"Trace '{trace_id}' was not found.")
         return
 
     trace = _trace_from_data(data)
@@ -284,11 +294,18 @@ def _cmd_export(trace_id: str, export_format: str) -> None:
 
 
 def _cmd_compare(trace_id_1: str, trace_id_2: str) -> None:
-    data_1 = load_trace(trace_id_1)
-    data_2 = load_trace(trace_id_2)
+    resolved_trace_id_1 = _resolve_user_trace_id(trace_id_1)
+    resolved_trace_id_2 = _resolve_user_trace_id(trace_id_2)
+
+    if resolved_trace_id_1 is None or resolved_trace_id_2 is None:
+        _print_missing_trace("Not enough stored traces found to compare.")
+        return
+
+    data_1 = load_trace(resolved_trace_id_1)
+    data_2 = load_trace(resolved_trace_id_2)
 
     if data_1 is None or data_2 is None:
-        print("null")
+        _print_missing_trace("One or both traces could not be found for comparison.")
         return
 
     trace_1 = _trace_from_data(data_1)
@@ -328,9 +345,12 @@ def _cmd_latest(as_json: bool = False) -> None:
 
 def _cmd_init(output_path: str = "tracelm_example.py", force: bool = False) -> None:
     path = Path(output_path)
+    if path.exists() and path.is_dir():
+        raise IsADirectoryError(f"{path} is a directory. Choose a Python file path instead.")
     if path.exists() and not force:
         raise FileExistsError(f"{path} already exists. Use --force to overwrite it.")
 
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(INIT_TEMPLATE, encoding="utf-8")
     print(f"Created {path}")
     print(f"Next: tracelm run {path}")

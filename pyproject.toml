@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tracelm"
-version = "0.4.3"
+version = "0.4.4"
 description = "Lightweight distributed LLM execution tracer and profiler"
 readme = "README.md"
 requires-python = ">=3.9"
