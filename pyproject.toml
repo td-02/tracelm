@@ -4,15 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tracelm"
-version = "0.4.0"
+version = "0.4.1"
 description = "Lightweight distributed LLM execution tracer and profiler"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
   { name = "Tapesh Chandra Das" }
 ]
-license = "MIT"
-license-files = ["LICENSE"]
+license = { text = "MIT" }
+keywords = ["llm", "tracing", "observability", "profiling", "rag", "fastapi"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Debuggers",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Monitoring",
+]
 
 [project.optional-dependencies]
 fastapi = ["fastapi"]
@@ -21,3 +34,9 @@ otel = ["opentelemetry-sdk"]
 
 [project.scripts]
 tracelm = "tracelm.cli.main:run"
+
+[project.urls]
+Homepage = "https://github.com/td-02/tracelm"
+Documentation = "https://github.com/td-02/tracelm/blob/main/docs/ARCHITECTURE.md"
+Repository = "https://github.com/td-02/tracelm"
+Issues = "https://github.com/td-02/tracelm/issues"

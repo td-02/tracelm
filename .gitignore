@@ -1,0 +1,10 @@
+.venv/
+.venv_pubtest/
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+*.db
+*.log
+trace_*.json
